@@ -19,6 +19,8 @@ class StarJumpGame {
      this.collectedStars = 0;
      this.levelScores = this.getLevelScores(); // Track individual level scores
      this.scoreRequirements = this.getScoreRequirements(); // Score needed to unlock each level
+     this.isMobile = this.detectMobile(); // Mobile device detection
+     this.lastTouchTime = 0; // Prevent double-tap zoom
     this.gameObjects = { 
       ball: null, 
       platforms: [], 
@@ -38,9 +40,11 @@ class StarJumpGame {
     this.powerUpTimers = {};
     this.gameLoop = null;
     this.camera = { y: 0 };
-    this.jumpForce = 0.007;
+    this.jumpForce = this.isMobile ? 0.009 : 0.007; // Stronger jump on mobile
      this.isJumping = false;
      this.particles = [];
+     this.touchStartTime = 0;
+     this.touchHoldBonus = 0;
      
      this.setupEngine();
      this.setupUI();
@@ -486,6 +490,9 @@ class StarJumpGame {
      console.log(`Total bodies in world: ${this.world.bodies.length}`);
     
     this.updateUI();
+    
+    // Apply mobile optimizations
+    this.optimizeForMobile();
   }
 
   jump() {
@@ -501,10 +508,28 @@ class StarJumpGame {
         return;
       }
       
-      // Calculate jump force with strength power-up
+      // Prevent double-tap zoom on mobile
+      const currentTime = Date.now();
+      if (this.isMobile && currentTime - this.lastTouchTime < 300) {
+        this.lastTouchTime = currentTime;
+        return;
+      }
+      this.lastTouchTime = currentTime;
+      
+      // Calculate jump force with strength power-up and mobile bonus
       let jumpForce = this.jumpForce;
       if (this.activePowerUps.strength) {
         jumpForce *= 1.5; // 50% stronger jumps
+      }
+      
+      // Mobile-specific jump enhancements
+      if (this.isMobile) {
+        jumpForce *= 1.1; // 10% bonus for mobile
+        
+        // Add haptic feedback if available
+        if (navigator.vibrate) {
+          navigator.vibrate(50);
+        }
       }
       
       // Apply upward force
@@ -1680,16 +1705,36 @@ class StarJumpGame {
         tapAreaHeight = 60;
       }
       
-      // Set canvas dimensions to fill available space
-      this.canvas.width = vw;
-      this.canvas.height = vh - hudHeight - tapAreaHeight;
+      // Get device pixel ratio for crisp rendering on mobile
+      const dpr = window.devicePixelRatio || 1;
+      const displayWidth = vw;
+      const displayHeight = vh - hudHeight - tapAreaHeight;
+      
+      // Set canvas display size (CSS pixels)
+      this.canvas.style.width = displayWidth + 'px';
+      this.canvas.style.height = displayHeight + 'px';
+      
+      // Set canvas actual size (device pixels) for crisp rendering
+      this.canvas.width = displayWidth * dpr;
+      this.canvas.height = displayHeight * dpr;
+      
+      // Scale the canvas context to match device pixel ratio
+      const ctx = this.canvas.getContext('2d');
+      if (ctx) {
+        ctx.scale(dpr, dpr);
+      }
       
       // Update render options if render exists
       if (this.render) {
-        this.render.options.width = this.canvas.width;
-        this.render.options.height = this.canvas.height;
+        this.render.options.width = displayWidth;
+        this.render.options.height = displayHeight;
         this.render.canvas.width = this.canvas.width;
         this.render.canvas.height = this.canvas.height;
+        
+        // Enable mobile-optimized rendering
+        this.render.options.pixelRatio = dpr;
+        this.render.options.hasBounds = false;
+        this.render.options.enabled = true;
       }
     }
     
@@ -1753,15 +1798,34 @@ class StarJumpGame {
       return levelIndex < this.unlockedLevels;
     }
     
-    resize() {
-      this.updateCanvasSize();
-      
-      // Reload current level with new dimensions if playing
-      if (this.gameState === 'playing' && this.gameObjects.ball) {
-        this.loadLevel(this.currentLevel);
-      }
-    }
- }
+    detectMobile() {
+       return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+              ('ontouchstart' in window) || 
+              (navigator.maxTouchPoints > 0);
+     }
+     
+     optimizeForMobile() {
+       if (this.isMobile) {
+         // Adjust physics for mobile
+         this.engine.world.gravity.y = 0.8; // Slightly lighter gravity
+         
+         // Improve ball physics for touch
+         if (this.gameObjects.ball) {
+           this.gameObjects.ball.restitution = 0.4; // More bouncy
+           this.gameObjects.ball.frictionAir = 0.002; // Less air resistance
+         }
+       }
+     }
+     
+     resize() {
+       this.updateCanvasSize();
+       
+       // Reload current level with new dimensions if playing
+       if (this.gameState === 'playing' && this.gameObjects.ball) {
+         this.loadLevel(this.currentLevel);
+       }
+     }
+  }
 
 // Initialize game when DOM is loaded
 window.addEventListener('DOMContentLoaded', () => {
