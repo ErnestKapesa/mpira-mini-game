@@ -14,9 +14,11 @@ class StarJumpGame {
      this.score = 0;
      this.height = 0;
      this.maxHeight = 0;
-     this.unlockedLevels = 15; // Unlock all chapters for testing (change to 1 for production)
-     this.totalScore = 0;
+     this.unlockedLevels = this.getUnlockedLevels(); // Dynamic level unlocking
+     this.totalScore = this.getTotalScore();
      this.collectedStars = 0;
+     this.levelScores = this.getLevelScores(); // Track individual level scores
+     this.scoreRequirements = this.getScoreRequirements(); // Score needed to unlock each level
     this.gameObjects = { 
       ball: null, 
       platforms: [], 
@@ -49,12 +51,13 @@ class StarJumpGame {
 
   setupEngine() {
       this.engine.world.gravity.y = 1.0; // Slightly stronger gravity for better feel
+    this.updateCanvasSize(); // Set responsive canvas size
     this.render = Render.create({
       canvas: this.canvas,
       engine: this.engine,
       options: {
-         width: Math.min(600, window.innerWidth),
-         height: window.innerHeight - 176,
+         width: this.canvas.width,
+         height: this.canvas.height,
         wireframes: false,
         background: 'transparent',
         showVelocity: false,
@@ -810,11 +813,16 @@ class StarJumpGame {
     }
     
     if (won) {
-      this.totalScore += this.score;
-      // Unlock next level if completed current level
-      if (this.currentLevel + 1 < LEVELS.length && this.currentLevel + 1 >= this.unlockedLevels) {
-        this.unlockedLevels = this.currentLevel + 2;
-        console.log(`Unlocked level ${this.unlockedLevels}`);
+      // Save the level score and update progression
+      this.saveLevelScore(this.currentLevel, this.score);
+      
+      // Check if new levels were unlocked
+      const newUnlockedLevels = this.getUnlockedLevels();
+      const levelsUnlocked = newUnlockedLevels > this.unlockedLevels;
+      this.unlockedLevels = newUnlockedLevels;
+      
+      if (levelsUnlocked) {
+        console.log(`New levels unlocked! Now have access to ${this.unlockedLevels} levels`);
       }
     }
     
@@ -889,9 +897,7 @@ class StarJumpGame {
         
         for (let i = act.start; i <= act.end; i++) {
           if (i < LEVELS.length) {
-            const isUnlocked = i < this.unlockedLevels;
-            const lockIcon = isUnlocked ? '★' : '■';
-            const levelName = isUnlocked ? LEVELS[i].name : 'Chapter Locked';
+            const isUnlocked = this.isLevelUnlocked(i);
             const chapterNum = i + 1;
             
             // Add African pattern based on chapter
@@ -900,14 +906,28 @@ class StarJumpGame {
             else if (i < 10) pattern = '▲'; // Journey - triangles  
             else pattern = '●'; // Return - circles
             
+            let statusText = '';
+            let levelTitle = '';
+            
+            if (isUnlocked) {
+              levelTitle = LEVELS[i].name;
+              const levelScore = this.levelScores[i] || 0;
+              statusText = levelScore > 0 ? `★ ${levelScore}` : '★';
+            } else {
+              levelTitle = 'Chapter Locked';
+              const requiredScore = this.scoreRequirements[i];
+              const currentTotal = this.totalScore;
+              statusText = `🔒 Need ${requiredScore - currentTotal} more points`;
+            }
+            
             levelList += `
-              <div class="african-chapter-item ${isUnlocked ? 'unlocked' : 'locked'}" data-level="${i}">
+              <div class="african-chapter-item ${isUnlocked ? 'unlocked' : 'locked'}" data-level="${i}" ${!isUnlocked ? 'title="Score ' + this.scoreRequirements[i] + ' points total to unlock this level"' : ''}>
                 <div class="chapter-pattern">${pattern}</div>
                 <div class="chapter-info">
                   <div class="chapter-number">Chapter ${chapterNum}</div>
-                  <div class="chapter-title">${levelName}</div>
-                  <div class="chapter-status">${lockIcon}</div>
+                  <div class="chapter-title">${levelTitle}</div>
                 </div>
+                <div class="chapter-status">${statusText}</div>
               </div>`;
           }
         }
@@ -954,10 +974,14 @@ class StarJumpGame {
         this.togglePause();
         break;
       case 'won':
-        if (this.currentLevel < LEVELS.length - 1) {
+        if (this.currentLevel < LEVELS.length - 1 && this.isLevelUnlocked(this.currentLevel + 1)) {
           this.currentLevel++;
           this.startGame();
+        } else if (this.currentLevel < LEVELS.length - 1) {
+          // Next level is not unlocked, show level select
+          this.showLevelSelect();
         } else {
+          // Completed all levels, restart from beginning
           this.currentLevel = 0;
           this.startGame();
         }
@@ -1630,12 +1654,112 @@ class StarJumpGame {
       });
     }
 
-   resize() {
-      const maxWidth = Math.min(600, window.innerWidth);
-      this.render.canvas.width = maxWidth;
-      this.render.canvas.height = window.innerHeight - 176;
-      this.render.options.width = maxWidth;
-      this.render.options.height = window.innerHeight - 176;
+    updateCanvasSize() {
+      // Get viewport dimensions
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      
+      // Calculate HUD and tap area heights based on screen size
+      let hudHeight = 56;
+      let tapAreaHeight = 120;
+      
+      if (vw <= 320) {
+        hudHeight = 40;
+        tapAreaHeight = 70;
+      } else if (vw <= 480) {
+        hudHeight = 44;
+        tapAreaHeight = 80;
+      } else if (vw <= 768) {
+        hudHeight = 48;
+        tapAreaHeight = 100;
+      }
+      
+      // Handle landscape orientation
+      if (vh <= 500 && vw > vh) {
+        hudHeight = 36;
+        tapAreaHeight = 60;
+      }
+      
+      // Set canvas dimensions to fill available space
+      this.canvas.width = vw;
+      this.canvas.height = vh - hudHeight - tapAreaHeight;
+      
+      // Update render options if render exists
+      if (this.render) {
+        this.render.options.width = this.canvas.width;
+        this.render.options.height = this.canvas.height;
+        this.render.canvas.width = this.canvas.width;
+        this.render.canvas.height = this.canvas.height;
+      }
+    }
+    
+    getScoreRequirements() {
+      // Score requirements to unlock each level
+      return [
+        0,    // Level 1 - always unlocked
+        50,   // Level 2 - need 50 points from level 1
+        150,  // Level 3 - need 150 total points
+        300,  // Level 4 - need 300 total points
+        500,  // Level 5 - need 500 total points
+        750,  // Level 6 - need 750 total points
+        1050, // Level 7 - need 1050 total points
+        1400, // Level 8 - need 1400 total points
+        1800, // Level 9 - need 1800 total points
+        2250, // Level 10 - need 2250 total points
+        2750, // Level 11 - need 2750 total points
+        3300, // Level 12 - need 3300 total points
+        3900, // Level 13 - need 3900 total points
+        4550, // Level 14 - need 4550 total points
+        5250  // Level 15 - need 5250 total points
+      ];
+    }
+    
+    getLevelScores() {
+      const saved = localStorage.getItem('mpira_level_scores');
+      return saved ? JSON.parse(saved) : new Array(LEVELS.length).fill(0);
+    }
+    
+    getTotalScore() {
+      const levelScores = this.getLevelScores();
+      return levelScores.reduce((total, score) => total + score, 0);
+    }
+    
+    getUnlockedLevels() {
+      const totalScore = this.getTotalScore();
+      const requirements = this.getScoreRequirements();
+      
+      let unlockedCount = 1; // Always have level 1 unlocked
+      for (let i = 1; i < requirements.length; i++) {
+        if (totalScore >= requirements[i]) {
+          unlockedCount = i + 1;
+        } else {
+          break;
+        }
+      }
+      
+      return unlockedCount;
+    }
+    
+    saveLevelScore(levelIndex, score) {
+      this.levelScores[levelIndex] = Math.max(this.levelScores[levelIndex], score);
+      localStorage.setItem('mpira_level_scores', JSON.stringify(this.levelScores));
+      
+      // Update total score and unlocked levels
+      this.totalScore = this.getTotalScore();
+      this.unlockedLevels = this.getUnlockedLevels();
+    }
+    
+    isLevelUnlocked(levelIndex) {
+      return levelIndex < this.unlockedLevels;
+    }
+    
+    resize() {
+      this.updateCanvasSize();
+      
+      // Reload current level with new dimensions if playing
+      if (this.gameState === 'playing' && this.gameObjects.ball) {
+        this.loadLevel(this.currentLevel);
+      }
     }
  }
 
