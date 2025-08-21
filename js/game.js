@@ -40,7 +40,7 @@ class StarJumpGame {
     this.powerUpTimers = {};
     this.gameLoop = null;
     this.camera = { y: 0 };
-    this.jumpForce = this.isMobile ? 0.009 : 0.007; // Stronger jump on mobile
+    this.jumpForce = this.isMobile ? 0.025 : 0.020; // Much stronger jump force for playable game
      this.isJumping = false;
      this.particles = [];
      this.touchStartTime = 0;
@@ -54,7 +54,7 @@ class StarJumpGame {
   }
 
   setupEngine() {
-      this.engine.world.gravity.y = 1.0; // Slightly stronger gravity for better feel
+      this.engine.world.gravity.y = 0.6; // Balanced gravity for better jumping
     this.updateCanvasSize(); // Set responsive canvas size
     this.render = Render.create({
       canvas: this.canvas,
@@ -1807,7 +1807,7 @@ class StarJumpGame {
      optimizeForMobile() {
        if (this.isMobile) {
          // Adjust physics for mobile
-         this.engine.world.gravity.y = 0.8; // Slightly lighter gravity
+         this.engine.world.gravity.y = 0.5; // Lighter gravity for mobile touch controls
          
          // Improve ball physics for touch
          if (this.gameObjects.ball) {
