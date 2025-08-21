@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" style="display: none;">
+  <!-- Adinkra Symbols -->
+  <defs>
+    <!-- Dwennimmen (Ram's Horns) - Strength and Humility -->
+    <g id="dwennimmen">
+      <path d="M20 20 Q30 10 40 20 Q30 30 20 20 M60 20 Q50 10 40 20 Q50 30 60 20" 
+            fill="#000" stroke="#000" stroke-width="2"/>
+      <circle cx="40" cy="20" r="3" fill="#8BAF5B"/>
+    </g>
+    
+    <!-- Sankofa (Return and Get It) - Learning from the Past -->
+    <g id="sankofa">
+      <path d="M40 10 Q20 20 40 30 Q60 20 40 10" fill="none" stroke="#000" stroke-width="3"/>
+      <path d="M40 30 L40 40 M35 35 L40 40 L45 35" stroke="#000" stroke-width="2"/>
+      <circle cx="40" cy="25" r="2" fill="#8BAF5B"/>
+    </g>
+    
+    <!-- Nyansapo (Wisdom Knot) - Wisdom and Intelligence -->
+    <g id="nyansapo">
+      <rect x="30" y="30" width="20" height="20" fill="none" stroke="#000" stroke-width="2"/>
+      <path d="M30 40 L50 40 M40 30 L40 50" stroke="#000" stroke-width="2"/>
+      <circle cx="35" cy="35" r="2" fill="#8BAF5B"/>
+      <circle cx="45" cy="35" r="2" fill="#8BAF5B"/>
+      <circle cx="35" cy="45" r="2" fill="#8BAF5B"/>
+      <circle cx="45" cy="45" r="2" fill="#8BAF5B"/>
+    </g>
+    
+    <!-- African Tribal Mask -->
+    <g id="tribal-mask">
+      <ellipse cx="40" cy="35" rx="15" ry="20" fill="#000" stroke="#8BAF5B" stroke-width="2"/>
+      <circle cx="35" cy="30" r="3" fill="#8BAF5B"/>
+      <circle cx="45" cy="30" r="3" fill="#8BAF5B"/>
+      <path d="M35 40 Q40 45 45 40" fill="none" stroke="#8BAF5B" stroke-width="2"/>
+      <path d="M30 25 L25 20 M50 25 L55 20" stroke="#000" stroke-width="2"/>
+    </g>
+    
+    <!-- Geometric African Pattern -->
+    <g id="geometric-pattern">
+      <polygon points="40,20 50,30 40,40 30,30" fill="none" stroke="#000" stroke-width="2"/>
+      <polygon points="35,25 45,25 45,35 35,35" fill="#8BAF5B" opacity="0.7"/>
+      <circle cx="40" cy="30" r="2" fill="#000"/>
+    </g>
+    
+    <!-- Baobab Tree Symbol -->
+    <g id="baobab">
+      <rect x="38" y="35" width="4" height="15" fill="#654321"/>
+      <ellipse cx="40" cy="30" rx="12" ry="8" fill="#8BAF5B"/>
+      <path d="M28 32 Q25 28 30 25 M52 32 Q55 28 50 25 M35 22 Q32 18 37 15 M45 22 Q48 18 43 15" 
+            stroke="#654321" stroke-width="2" fill="none"/>
+    </g>
+    
+    <!-- African Diamond Pattern -->
+    <g id="diamond-pattern">
+      <polygon points="40,15 55,30 40,45 25,30" fill="none" stroke="#000" stroke-width="2"/>
+      <polygon points="40,20 50,30 40,40 30,30" fill="#8BAF5B" opacity="0.5"/>
+      <polygon points="40,25 45,30 40,35 35,30" fill="#000"/>
+    </g>
+    
+    <!-- Zigzag Border Pattern -->
+    <g id="zigzag-border">
+      <path d="M20 30 L25 25 L30 30 L35 25 L40 30 L45 25 L50 30 L55 25 L60 30" 
+            fill="none" stroke="#000" stroke-width="3"/>
+      <path d="M20 35 L25 40 L30 35 L35 40 L40 35 L45 40 L50 35 L55 40 L60 35" 
+            fill="none" stroke="#8BAF5B" stroke-width="2"/>
+    </g>
+  </defs>
+</svg>
