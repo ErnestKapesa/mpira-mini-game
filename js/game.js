@@ -55,6 +55,13 @@ class StarJumpGame {
 
   setupEngine() {
       this.engine.world.gravity.y = 0.6; // Balanced gravity for better jumping
+      
+      // Performance optimizations
+      this.engine.timing.timeScale = 1;
+      this.engine.positionIterations = 6;
+      this.engine.velocityIterations = 4;
+      this.engine.constraintIterations = 2;
+      
     this.updateCanvasSize(); // Set responsive canvas size
     this.render = Render.create({
       canvas: this.canvas,
@@ -65,7 +72,11 @@ class StarJumpGame {
         wireframes: false,
         background: 'transparent',
         showVelocity: false,
-        showAngleIndicator: false
+        showAngleIndicator: false,
+        showDebug: false,
+        showBroadphase: false,
+        showBounds: false,
+        showStats: false
       }
     });
     
@@ -1831,8 +1842,21 @@ class StarJumpGame {
 window.addEventListener('DOMContentLoaded', () => {
   const game = new StarJumpGame();
   
+  // Portrait orientation lock
+  if (screen.orientation && screen.orientation.lock) {
+    screen.orientation.lock('portrait').catch(() => {
+      console.log('Orientation lock not supported');
+    });
+  }
+  
   window.addEventListener('resize', () => game.resize());
   window.addEventListener('orientationchange', () => {
-    setTimeout(() => game.resize(), 100);
-  });
+    setTimeout(() => {
+      game.resize();
+      // Re-attempt orientation lock after orientation change
+      if (screen.orientation && screen.orientation.lock) {
+        screen.orientation.lock('portrait').catch(() => {});
+      }
+    }, 100);
+   });
 });
